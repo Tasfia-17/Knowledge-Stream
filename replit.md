@@ -1,96 +1,110 @@
-# Workspace
+# SwiftRead AI
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+SwiftRead AI is a production-ready AI-powered mobile application built with Expo React Native. It transforms long-form content into speed-readable knowledge streams using AI summaries, RSVP (Rapid Serial Visual Presentation) speed reading, and a beautiful glassmorphism-inspired UI.
+
+## Tagline
+"Turn the internet into speed-readable knowledge."
 
 ## Stack
 
 - **Monorepo tool**: pnpm workspaces
 - **Node.js version**: 24
 - **Package manager**: pnpm
-- **TypeScript version**: 5.9
-- **API framework**: Express 5
-- **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+- **Mobile framework**: Expo / React Native (Expo Router file-based routing)
+- **API framework**: Express 5 (shared api-server artifact)
+- **Database**: PostgreSQL + Drizzle ORM (api-server)
+- **State management**: React Context (AppContextProvider) + AsyncStorage for persistence
+- **UI animations**: React Native Animated API + expo-linear-gradient
+- **Icons**: @expo/vector-icons (Feather, Ionicons, SymbolView)
+- **Typography**: Inter (@expo-google-fonts/inter)
+- **Navigation**: Tab-based (NativeTabs with liquid glass on iOS 26+, classic Tabs fallback)
 
 ## Structure
 
 ```text
-artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
-│   ├── api-spec/           # OpenAPI spec + Orval codegen config
-│   ├── api-client-react/   # Generated React Query hooks
-│   ├── api-zod/            # Generated Zod schemas from OpenAPI
-│   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+artifacts/
+├── mobile/                    # Expo React Native app
+│   ├── app/
+│   │   ├── _layout.tsx        # Root layout with providers
+│   │   ├── onboarding.tsx     # 3-step onboarding
+│   │   ├── (tabs)/
+│   │   │   ├── _layout.tsx    # 5-tab navigation (NativeTabs + classic fallback)
+│   │   │   ├── index.tsx      # Home — dashboard, paste input, trending articles
+│   │   │   ├── reader.tsx     # Speed reader settings & article selection
+│   │   │   ├── insights.tsx   # Knowledge Vault — saved insights
+│   │   │   ├── library.tsx    # Article library with category filters
+│   │   │   └── profile.tsx    # Analytics, interests, premium upsell
+│   │   ├── article/[id].tsx   # Article detail (summaries, insights, full text)
+│   │   └── rsvp/[id].tsx      # RSVP speed reader with ORP highlighting
+│   ├── components/
+│   │   ├── AnimatedBackground.tsx  # Floating orb animated background
+│   │   ├── ArticleCard.tsx         # Article card with category badge, meta
+│   │   ├── ErrorBoundary.tsx       # Error boundary (class component)
+│   │   ├── ErrorFallback.tsx       # Error fallback UI
+│   │   ├── GlassCard.tsx           # Reusable glassmorphism card
+│   │   └── InsightCard.tsx         # Insight card with share + delete
+│   ├── constants/colors.ts    # Full dark/light theme palette
+│   ├── context/AppContext.tsx # Global state (articles, insights, stats)
+│   └── data/demoArticles.ts   # 5 high-quality demo articles
+├── api-server/                # Express API server (shared backend)
+└── mockup-sandbox/            # UI prototyping sandbox
+lib/
+├── api-spec/                  # OpenAPI spec + Orval codegen config
+├── api-client-react/          # Generated React Query hooks
+├── api-zod/                   # Generated Zod schemas
+└── db/                        # Drizzle ORM schema + DB connection
 ```
 
-## TypeScript & Composite Projects
+## Key Features
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+### Speed Reading Engine (RSVP)
+- Words appear one by one at center of screen
+- ORP (Optimal Recognition Point) letter highlighted in accent blue
+- Speeds: 200, 300, 400, 500, 600, 700, 800 WPM
+- Controls: Play/Pause, Rewind 10 words, Forward 10 words, Speed selector
+- Animated word transitions with fade + spring scale
+- Progress bar with time remaining
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+### AI Processing (Demo Mode)
+- One-sentence summary
+- 30-second summary
+- 2-minute deep dive summary
+- 5 key insights (tappable to save)
+- "Why this matters" explanation
+- Full article text viewer
 
-## Root Scripts
+### Navigation (5 Tabs)
+1. **Home** — Animated dashboard, paste-to-add content, stats, daily briefing, trending
+2. **Reader** — Speed configuration + continue reading
+3. **Insights** — Knowledge Vault with saved insights, share as cards
+4. **Library** — All articles with category filters
+5. **Profile** — Analytics dashboard, interests personalization, premium upsell
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+### Onboarding (3 steps)
+1. Welcome screen with app features
+2. Interest selection (8 categories)
+3. Reading speed selection
 
-## Packages
+### Design System
+- Dark-first glassmorphism UI with electric blue → deep purple gradient
+- Animated floating orb background
+- Custom gradient category badges
+- iOS liquid glass tab bar support (iOS 26+)
+- Smooth micro-animations throughout
 
-### `artifacts/api-server` (`@workspace/api-server`)
+## Running
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
+- Mobile: `pnpm --filter @workspace/mobile run dev`
+- API: `pnpm --filter @workspace/api-server run dev`
+- Codegen: `pnpm --filter @workspace/api-spec run codegen`
 
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+## Color Palette
 
-### `lib/db` (`@workspace/db`)
-
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
-
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
-
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
-
-### `lib/api-spec` (`@workspace/api-spec`)
-
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
-
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
-
-### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
-
-### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
-
-### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+- Primary: `#4F8EF7` (Electric Blue)
+- Deep: `#6C3EF7` (Deep Purple)
+- Accent: `#00E5FF` (Neon Cyan)
+- Violet: `#B06EFF` (Soft Violet)
+- Background: `#050810` (Deep Space)
+- Surface: `#0D1120`
